@@ -8,6 +8,7 @@ export const GlobalSearch: React.FC = () => {
   const [volunteers, setVolunteers] = useState<(Volunteer & { congregation?: Congregation; evaluations?: Evaluation[] })[]>([]);
   const [sessions, setSessions] = useState<ConventionSession[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Search & Filter state
   const [nameQuery, setNameQuery] = useState('');
@@ -24,14 +25,16 @@ export const GlobalSearch: React.FC = () => {
     const loadAllData = async () => {
       try {
         setLoading(true);
+        setError(null);
         const [volsList, sessList] = await Promise.all([
           db.getAllVolunteers(),
           db.getSessions()
         ]);
         setVolunteers(volsList);
         setSessions(sessList);
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error loading global search data:', err);
+        setError(err.message || String(err));
       } finally {
         setLoading(false);
       }
@@ -231,6 +234,12 @@ export const GlobalSearch: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-800 text-xs font-mono">
+          <strong>Database Connection Error:</strong> {error}
+        </div>
+      )}
 
       {/* Results Section */}
       <div className="bg-white border border-sand-200 rounded-lg shadow-sm overflow-hidden">
