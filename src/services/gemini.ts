@@ -181,3 +181,75 @@ const getMockExtractedData = (fileName: string): ExtractedVolunteer[] => {
     }
   ];
 };
+
+export type ExtractedCongregation = {
+  name: string;
+  number: string;
+}
+
+export const extractCongregationsFromDoc = async (
+  _file: File,
+  fileBase64: string,
+  excelText?: string
+): Promise<ExtractedCongregation[]> => {
+  const geminiKey = HARDCODED_GEMINI_API_KEY || 
+                    import.meta.env.VITE_GEMINI_API_KEY || 
+                    localStorage.getItem('ATLAS_GEMINI_KEY');
+
+  if (!geminiKey) {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve(getMockCongregations());
+      }, 1500);
+    });
+  }
+
+  try {
+    const ai = new GoogleGenerativeAI(geminiKey);
+    const model = ai.getGenerativeModel({ model: 'gemini-1.5-flash' });
+
+    let prompt = `
+      You are an expert document data extractor. You are parsing a congregation list, registry, or directory for a regional convention.
+      
+      Extract all congregations found in this document. Return the result strictly as a valid JSON array of objects. Do not include markdown code block formatting (like \`\`\`json) or extra text. Just output raw JSON.
+      
+      Each object in the array must contain the following keys exactly:
+      - "name": Full name of the congregation (string, e.g. "Ridgefield Congregation" or "Lake Helen Spanish")
+      - "number": 5-digit or standard congregation number (string, e.g., "12304". If not specified or unknown, generate a random 5-digit number)
+    `;
+
+    let response;
+    if (excelText) {
+      prompt += `\nHere is the text extracted from the spreadsheet:\n${excelText}`;
+      response = await model.generateContent([prompt]);
+    } else {
+      response = await model.generateContent([
+        {
+          inlineData: {
+            data: fileBase64.split(',')[1] || fileBase64,
+            mimeType: 'application/pdf'
+          }
+        },
+        prompt
+      ]);
+    }
+
+    const responseText = response.response.text().trim();
+    const cleanJson = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
+    return JSON.parse(cleanJson) as ExtractedCongregation[];
+  } catch (error) {
+    console.error('Gemini API congregation extraction failed:', error);
+    throw new Error('Gemini API congregation extraction failed. Please check your API key or document format.');
+  }
+};
+
+const getMockCongregations = (): ExtractedCongregation[] => {
+  return [
+    { name: "Ridgefield Congregation", number: "12304" },
+    { name: "Sunset Park Congregation", number: "24890" },
+    { name: "Bayview Congregation", number: "31045" },
+    { name: "Lake Helen Spanish", number: "15000" },
+    { name: "Dean Road Spanish", number: "25000" },
+    { name: "Oak Ridge", number: "10552" }
+  ];
+};

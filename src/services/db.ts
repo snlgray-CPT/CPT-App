@@ -154,6 +154,24 @@ export const db = {
     }));
   },
 
+  async getAllVolunteers(): Promise<(Volunteer & { congregation?: Congregation; evaluations?: Evaluation[] })[]> {
+    const client = getSupabaseInstance();
+    
+    const congregations = await this.getAllCongregations();
+
+    const { data, error } = await client
+      .from('volunteers')
+      .select('*, evaluations(*)');
+
+    if (error) throw error;
+
+    return (data || []).map((v: any) => ({
+      ...v,
+      congregation: congregations.find(c => c.id === v.home_congregation_id),
+      evaluations: v.evaluations || []
+    }));
+  },
+
   async upsertVolunteers(volList: Omit<Volunteer, 'id'>[]): Promise<void> {
     const client = getSupabaseInstance();
     const { error } = await client.from('volunteers').upsert(volList, { onConflict: 'jwpub_email' });

@@ -1,17 +1,12 @@
 import React, { useState } from 'react';
 import { useSession } from '../contexts/SessionContext';
-import { Compass, BookOpen, Calendar, MapPin, Database, AlertCircle, WifiOff } from 'lucide-react';
-import type { ConventionSession } from '../types/database';
+import { Compass, Database, AlertCircle, WifiOff } from 'lucide-react';
 
 export const SessionGate: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { 
     user, 
-    activeSession, 
-    sessions, 
     login, 
     signUp, 
-    selectSession, 
-    createSession, 
     supabaseConfigured, 
     isConnected,
     reloadConfig
@@ -30,13 +25,6 @@ export const SessionGate: React.FC<{ children: React.ReactNode }> = ({ children 
   const [cfgKey, setCfgKey] = useState('');
   const [cfgGemini, setCfgGemini] = useState('');
   const [isConfiguring, setIsConfiguring] = useState(false);
-
-  // Create session state
-  const [showCreate, setShowCreate] = useState(false);
-  const [newYear, setNewYear] = useState(new Date().getFullYear());
-  const [newId, setNewId] = useState('');
-  const [newLocation, setNewLocation] = useState('');
-  const [newDate, setNewDate] = useState('');
 
   const handleAuthSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -94,27 +82,7 @@ export const SessionGate: React.FC<{ children: React.ReactNode }> = ({ children 
     }, 1000);
   };
 
-  const handleCreateSession = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newId || !newLocation || !newDate) {
-      setError('All fields are required to initialize a convention context.');
-      return;
-    }
-    try {
-      const sess: ConventionSession = {
-        year: Number(newYear),
-        identifier: newId.toUpperCase(),
-        location: newLocation,
-        date: newDate
-      };
-      await createSession(sess);
-      setShowCreate(false);
-      setError('');
-    } catch (err: any) {
-      console.error(err);
-      setError(err.message || 'Could not create convention session. Please check Supabase logs/RLS.');
-    }
-  };
+
 
   // 1. Connection Error Shield Block (Triggered if not configured or offline)
   if (!supabaseConfigured || !isConnected) {
@@ -320,165 +288,6 @@ export const SessionGate: React.FC<{ children: React.ReactNode }> = ({ children 
                 Supabase Connected
               </span>
             </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // 3. Active Convention context selector
-  if (!activeSession) {
-    return (
-      <div className="min-h-screen bg-cream-100 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 font-sans">
-        <div className="max-w-2xl mx-auto w-full">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-extrabold text-forest-800 tracking-tight">
-              Select active convention context
-            </h2>
-            <p className="text-sand-600 mt-2">
-              Select or initialize the convention session. All evaluations, congregation matching, and volunteer records will be filtered by this context.
-            </p>
-          </div>
-
-          <div className="bg-sand-50 border border-sand-200 rounded-xl shadow-lg p-6 sm:p-8">
-            {error && (
-              <div className="mb-4 text-red-700 bg-red-50 border border-red-200 rounded p-3 text-sm font-mono">
-                {error}
-              </div>
-            )}
-
-            {!showCreate ? (
-              <div>
-                <h3 className="text-xs font-semibold text-sand-600 uppercase tracking-widest font-mono mb-4">
-                  Existing Conventions
-                </h3>
-                <div className="space-y-3 mb-6">
-                  {sessions.length === 0 ? (
-                    <div className="text-center py-6 text-sand-500 border border-dashed border-sand-300 rounded">
-                      No conventions created yet. Get started by creating one.
-                    </div>
-                  ) : (
-                    sessions.map((sess) => (
-                      <button
-                        key={`${sess.year}-${sess.identifier}`}
-                        onClick={() => selectSession(sess)}
-                        className="w-full text-left p-4 border border-sand-200 rounded-lg hover:border-forest-600 bg-white hover:bg-cream-50 transition-all flex justify-between items-center group shadow-sm hover:shadow"
-                      >
-                        <div className="flex items-center gap-4">
-                          <div className="bg-forest-50 p-2.5 rounded-lg text-forest-600 group-hover:bg-forest-600 group-hover:text-cream-50 transition-colors">
-                            <BookOpen className="w-5 h-5" />
-                          </div>
-                          <div>
-                            <div className="font-mono text-sm font-bold text-sand-800">
-                              {sess.year} - {sess.identifier}
-                            </div>
-                            <div className="text-xs text-sand-500 flex items-center gap-1.5 mt-0.5">
-                              <MapPin className="w-3 h-3 text-sand-400" />
-                              {sess.location}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <span className="text-xs text-sand-500 flex items-center gap-1 font-mono">
-                            <Calendar className="w-3.5 h-3.5 text-sand-400" />
-                            {sess.date}
-                          </span>
-                        </div>
-                      </button>
-                    ))
-                  )}
-                </div>
-
-                <div className="flex justify-end pt-2 border-t border-sand-200">
-                  <button
-                    onClick={() => setShowCreate(true)}
-                    className="btn-primary"
-                  >
-                    Create New Convention Context
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <form onSubmit={handleCreateSession} className="space-y-4">
-                <h3 className="text-xs font-semibold text-sand-600 uppercase tracking-widest font-mono mb-4">
-                  New Convention Details
-                </h3>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-semibold text-sand-700 uppercase tracking-wider mb-1 font-mono">
-                      Convention Year
-                    </label>
-                    <input
-                      type="number"
-                      required
-                      className="w-full atlas-input"
-                      value={newYear}
-                      onChange={(e) => setNewYear(Number(e.target.value))}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-sand-700 uppercase tracking-wider mb-1 font-mono">
-                      Identifier / Number
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="e.g. CO-01"
-                      className="w-full atlas-input"
-                      value={newId}
-                      onChange={(e) => setNewId(e.target.value)}
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-sand-700 uppercase tracking-wider mb-1 font-mono">
-                    Location
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="Assembly Hall or Arena Location"
-                    className="w-full atlas-input font-sans"
-                    value={newLocation}
-                    onChange={(e) => setNewLocation(e.target.value)}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-sand-700 uppercase tracking-wider mb-1 font-mono">
-                    Convention Date
-                  </label>
-                  <input
-                    type="date"
-                    required
-                    className="w-full atlas-input"
-                    value={newDate}
-                    onChange={(e) => setNewDate(e.target.value)}
-                  />
-                </div>
-
-                <div className="flex justify-between items-center pt-4 border-t border-sand-200">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowCreate(false);
-                      setError('');
-                    }}
-                    className="btn-secondary"
-                  >
-                    Back to Selection
-                  </button>
-                  <button
-                    type="submit"
-                    className="btn-primary"
-                  >
-                    Initialize Context
-                  </button>
-                </div>
-              </form>
-            )}
           </div>
         </div>
       </div>
