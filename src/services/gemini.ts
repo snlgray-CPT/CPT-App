@@ -8,6 +8,9 @@ export type ExtractedVolunteer = {
   congregationNumber: string;
   email: string;
   comments: string;
+  department: string;
+  assignment: string;
+  rating: 'A+' | 'A' | 'A-' | 'B+' | 'B' | 'B-' | 'C+' | 'C' | 'C-';
 }
 
 export const extractVolunteersFromDoc = async (
@@ -36,17 +39,22 @@ export const extractVolunteersFromDoc = async (
 
     let prompt = `
       You are an expert document data extractor. You are parsing a volunteer recommendation list, letter, or database export for a regional convention.
+      The input document may be in Spanish. You MUST translate all Spanish departments, assignments, and comments/recommendations to English.
+      
       Extract all volunteers found in this document. Return the result strictly as a valid JSON array of objects. Do not include markdown code block formatting (like \`\`\`json) or extra text. Just output raw JSON.
       
       Each object in the array must contain the following keys exactly:
       - "name": Full name of the volunteer (string)
-      - "age": Age (integer, use 0 if not specified or unknown)
-      - "congregationName": Name of their congregation (string)
+      - "age": Age (integer, default to 0 if not specified or unknown)
+      - "congregationName": Name of their congregation (string, e.g. "Dean Road Spanish" or "Lake Helen Spanish")
       - "congregationNumber": 5-digit or standard congregation number (string, default to empty string if not found)
-      - "email": jwpub.org email address (string, format: name@jwpub.org or similar. If not found, generate a plausible email: firstname.lastname@jwpub.org)
-      - "comments": Recommendations, elder comments, or department notes (string)
+      - "email": jwpub.org email address (string. If not found, generate a plausible email: firstname.lastname@jwpub.org)
+      - "comments": Recommendations/comments translated to English (string, e.g. "Older brother, but in good health. Very hard worker.")
+      - "department": The department translated to English (string, e.g., "Acomodador" -> "Attendants", "Alojamiento" -> "Lodging", "Audio/Video" -> "Audio/Video", "Bautismo" -> "Baptism")
+      - "assignment": The assignment/details translated to English (string, e.g., "Aux. (Asientos)" -> "Assistant (Seating)", "Supte." -> "Superintendent", "Aux. (Plataforma)" -> "Assistant (Platform)")
+      - "rating": Enforced custom rating bracket (must be one of: 'A+', 'A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-'). Map the input column "Ratin" or "Rating" (like B, C, A) directly.
 
-      If any field is missing, attempt to infer it or leave as a blank string/0.
+      Ensure any Spanish notes are fully translated to clear English.
     `;
 
     let response;
@@ -90,7 +98,10 @@ const getMockExtractedData = (fileName: string): ExtractedVolunteer[] => {
         congregationName: "Oak Ridge",
         congregationNumber: "10552",
         email: "c.sterling@jwpub.org",
-        comments: "Recommended as an assistant. Caleb serves as a regular pioneer and has been an asset in the audio/video department. Strongly recommended for general support."
+        comments: "Recommended as an assistant. Caleb serves as a regular pioneer and has been an asset in the audio/video department. Strongly recommended for general support.",
+        department: "Audio / Video",
+        assignment: "Assistant (Sound)",
+        rating: "A+"
       },
       {
         name: "Benjamin Albright",
@@ -98,28 +109,48 @@ const getMockExtractedData = (fileName: string): ExtractedVolunteer[] => {
         congregationName: "Oak Ridge",
         congregationNumber: "10552",
         email: "b.albright@jwpub.org",
-        comments: "Capable and willing. Serves as a ministerial servant. Experienced in accounts and hall setup."
+        comments: "Capable and willing. Serves as a ministerial servant. Experienced in accounts and hall setup.",
+        department: "Staging & Setup",
+        assignment: "Assistant (Attendant)",
+        rating: "B"
       }
     ];
   }
 
-  if (lowercaseName.includes('recommend') || lowercaseName.includes('form')) {
+  if (lowercaseName.includes('recommend') || lowercaseName.includes('form') || lowercaseName.includes('cpt')) {
     return [
       {
-        name: "Jared Vance",
-        age: 22,
-        congregationName: "Pine Valley",
-        congregationNumber: "18942",
-        email: "jared.vance@jwpub.org",
-        comments: "Young brother with great initiative. Eager to work under pressure. Recommended for Attendant or Cleaning departments."
+        name: "Fernando Menendez",
+        age: 62,
+        congregationName: "Dean Road Spanish",
+        congregationNumber: "25000",
+        email: "fernando.menendez@jwpub.org",
+        comments: "Older brother, but in good health. Very hard worker.",
+        department: "Attendants",
+        assignment: "Assistant (Seating)",
+        rating: "B"
       },
       {
-        name: "Luke Harrison",
-        age: 35,
-        congregationName: "Pine Valley",
-        congregationNumber: "18942",
-        email: "luke.harrison@jwpub.org",
-        comments: "Certified electrician. Ideal helper for electrical setups, AV power grids, or emergency engineering tasks."
+        name: "Byron Chavez Jr.",
+        age: 24,
+        congregationName: "Lake Helen Spanish",
+        congregationNumber: "15000",
+        email: "byron.chavez@jwpub.org",
+        comments: "Young brother with potential. For now, he is a good department assistant who will benefit from more training.",
+        department: "Attendants",
+        assignment: "Assistant (Exterior)",
+        rating: "C"
+      },
+      {
+        name: "Daniel Gatica",
+        age: 28,
+        congregationName: "Port Saint John Spanish",
+        congregationNumber: "25001",
+        email: "daniel.gatica@jwpub.org",
+        comments: "Very capable, humble, organized young man. Does very well with large departments. Has worked with parking and seating at regional conventions.",
+        department: "Attendants",
+        assignment: "Superintendent",
+        rating: "A"
       }
     ];
   }
@@ -132,7 +163,10 @@ const getMockExtractedData = (fileName: string): ExtractedVolunteer[] => {
       congregationName: "Oak Ridge",
       congregationNumber: "10552",
       email: "e.wright@jwpub.org",
-      comments: "Extracted from default template. Hardworking and reliable."
+      comments: "Extracted from default template. Hardworking and reliable.",
+      department: "Cleaning & Maintenance",
+      assignment: "Assistant",
+      rating: "A"
     },
     {
       name: "Daniel Foster",
@@ -140,7 +174,10 @@ const getMockExtractedData = (fileName: string): ExtractedVolunteer[] => {
       congregationName: "Maple Heights",
       congregationNumber: "11405",
       email: "d.foster@jwpub.org",
-      comments: "Previous experience in First Aid. Highly recommended."
+      comments: "Previous experience in First Aid. Highly recommended.",
+      department: "First Aid",
+      assignment: "Row Captain",
+      rating: "A-"
     }
   ];
 };
