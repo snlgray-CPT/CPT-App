@@ -15,7 +15,9 @@ export const extractVolunteersFromDoc = async (
   fileBase64: string, // Needed for PDF upload
   excelText?: string   // If Excel, the converted CSV/text representation
 ): Promise<ExtractedVolunteer[]> => {
-  const geminiKey = HARDCODED_GEMINI_API_KEY || localStorage.getItem('ATLAS_GEMINI_KEY');
+  const geminiKey = HARDCODED_GEMINI_API_KEY || 
+                    import.meta.env.VITE_GEMINI_API_KEY || 
+                    localStorage.getItem('ATLAS_GEMINI_KEY');
 
   if (!geminiKey) {
     // Return mock parsed results so the interface is 100% testable
