@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { useSession } from '../contexts/SessionContext';
-import { Compass, Settings, LogOut, Calendar, Database, Server } from 'lucide-react';
+import { Compass, Settings, LogOut, Calendar, Database, Server, ShieldAlert } from 'lucide-react';
 import { SettingsModal } from './SettingsModal';
+import { AdminPanel } from './AdminPanel';
 
 export const Header: React.FC = () => {
   const { user, activeSession, sessions, selectSession, logout, supabaseConfigured } = useSession();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isAdminOpen, setIsAdminOpen] = useState(false);
 
   return (
     <header className="bg-sand-50 border-b border-sand-200 font-sans sticky top-0 z-40 shadow-sm">
@@ -57,10 +59,21 @@ export const Header: React.FC = () => {
               {supabaseConfigured ? <Database className="w-4 h-4" /> : <Server className="w-4 h-4" />}
             </span>
 
+            {/* Admin Panel Link (Only visible to admin role) */}
+            {user?.role === 'admin' && (
+              <button
+                onClick={() => setIsAdminOpen(true)}
+                className="p-1.5 rounded-full border border-forest-300 bg-forest-50 text-forest-700 hover:bg-forest-600 hover:text-cream-50 transition-all flex items-center justify-center cursor-pointer animate-pulse"
+                title="Open Admin Panel"
+              >
+                <ShieldAlert className="w-4 h-4" />
+              </button>
+            )}
+
             {/* Settings Trigger */}
             <button
               onClick={() => setIsSettingsOpen(true)}
-              className="p-1.5 rounded-full border border-sand-300 text-sand-600 hover:text-forest-700 hover:bg-cream-50 transition-colors"
+              className="p-1.5 rounded-full border border-sand-300 text-sand-600 hover:text-forest-700 hover:bg-cream-50 transition-colors cursor-pointer"
               title="CPT settings"
             >
               <Settings className="w-4 h-4" />
@@ -70,12 +83,12 @@ export const Header: React.FC = () => {
             {user && (
               <div className="flex items-center gap-2 border-l border-sand-200 pl-4">
                 <div className="hidden sm:block text-right">
-                  <div className="text-[10px] text-sand-400 font-mono leading-none">Logged in</div>
+                  <div className="text-[10px] text-sand-400 font-mono leading-none">Logged in ({user.role})</div>
                   <div className="text-xs font-semibold text-sand-700 font-mono mt-0.5">{user.email}</div>
                 </div>
                 <button
                   onClick={logout}
-                  className="p-1.5 rounded-full border border-red-200 text-red-600 hover:bg-red-50 transition-colors"
+                  className="p-1.5 rounded-full border border-red-200 text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
                   title="Sign out"
                 >
                   <LogOut className="w-4 h-4" />
@@ -88,6 +101,7 @@ export const Header: React.FC = () => {
       </div>
 
       <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+      <AdminPanel isOpen={isAdminOpen} onClose={() => setIsAdminOpen(false)} />
     </header>
   );
 };
