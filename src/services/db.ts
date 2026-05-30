@@ -200,16 +200,34 @@ export const db = {
 
   // --- Purge Database Records (Admin action) ---
   async clearAllData(): Promise<void> {
-    const client = getSupabaseInstance();
-    // In cloud-only mode, we execute deletion on evaluations, volunteers, and congregations
-    // Relying on cascade deletes where configured.
-    const { error: errorE } = await client.from('evaluations').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-    if (errorE) throw errorE;
+    // 1. Wipe local browser cache tables
+    localStorage.removeItem('ATLAS_SESSIONS');
+    localStorage.removeItem('ATLAS_CONGREGATIONS');
+    localStorage.removeItem('ATLAS_VOLUNTEERS');
+    localStorage.removeItem('ATLAS_EVALUATIONS');
+    localStorage.removeItem('ATLAS_ACTIVE_SESSION');
+    // Set seeded to true so they do not auto-repopulate on reload
+    localStorage.setItem('ATLAS_SEEDED', 'true');
 
-    const { error: errorV } = await client.from('volunteers').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-    if (errorV) throw errorV;
+    // 2. Wipe Supabase tables if configured
+    if (isSupabaseConfigured()) {
+      try {
+        const client = getSupabaseInstance();
+        
+        // Purge evaluations first (foreign key dependency)
+        const { error: errorE } = await client.from('evaluations').delete().gt('year', 0);
+        if (errorE) console.warn('Supabase evaluations clear warning:', errorE.message);
 
-    const { error: errorC } = await client.from('congregations').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-    if (errorC) throw errorC;
+        // Purge volunteers
+        const { error: errorV } = await client.from('volunteers').delete().neq('name', '___non_existent___');
+        if (errorV) console.warn('Supabase volunteers clear warning:', errorV.message);
+
+        // Purge congregations
+        const { error: errorC } = await client.from('congregations').delete().neq('name', '___non_existent___');
+        if (errorC) console.warn('Supabase congregations clear warning:', errorC.message);
+      } catch (err) {
+        console.error('Failed to purge Supabase tables:', err);
+      }
+    }
   }
 };
