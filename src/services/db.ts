@@ -1,6 +1,8 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import type { Congregation, Volunteer, Evaluation, ConventionSession } from '../types/database';
 
+import { HARDCODED_SUPABASE_URL, HARDCODED_SUPABASE_ANON_KEY } from '../config';
+
 // ----------------------------------------------------
 // DB Provider & State Management
 // ----------------------------------------------------
@@ -8,8 +10,8 @@ import type { Congregation, Volunteer, Evaluation, ConventionSession } from '../
 let supabase: SupabaseClient | null = null;
 
 const getSupabaseKeys = () => {
-  const url = import.meta.env.VITE_SUPABASE_URL || localStorage.getItem('ATLAS_SUPABASE_URL');
-  const key = import.meta.env.VITE_SUPABASE_ANON_KEY || localStorage.getItem('ATLAS_SUPABASE_ANON_KEY');
+  const url = HARDCODED_SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL || localStorage.getItem('ATLAS_SUPABASE_URL');
+  const key = HARDCODED_SUPABASE_ANON_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY || localStorage.getItem('ATLAS_SUPABASE_ANON_KEY');
   return { url, key };
 };
 
