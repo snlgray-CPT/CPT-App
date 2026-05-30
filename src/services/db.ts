@@ -21,10 +21,15 @@ export const isSupabaseConfigured = (): boolean => {
 };
 
 export const initSupabase = () => {
-  const { url, key } = getSupabaseKeys();
-  if (url && key) {
-    supabase = createClient(url, key);
-  } else {
+  try {
+    const { url, key } = getSupabaseKeys();
+    if (url && url.trim() && key && key.trim()) {
+      supabase = createClient(url.trim(), key.trim());
+    } else {
+      supabase = null;
+    }
+  } catch (err) {
+    console.error('Failed to initialize Supabase client:', err);
     supabase = null;
   }
 };
@@ -102,17 +107,13 @@ const MOCK_EVALUATIONS: Evaluation[] = [
 
 // Seed Helper
 const initializeLocalStorage = () => {
-  if (!localStorage.getItem('ATLAS_SESSIONS')) {
+  const seeded = localStorage.getItem('ATLAS_SEEDED');
+  if (!seeded) {
     localStorage.setItem('ATLAS_SESSIONS', JSON.stringify(MOCK_CONVENTIONS));
-  }
-  if (!localStorage.getItem('ATLAS_CONGREGATIONS')) {
     localStorage.setItem('ATLAS_CONGREGATIONS', JSON.stringify(MOCK_CONGREGATIONS));
-  }
-  if (!localStorage.getItem('ATLAS_VOLUNTEERS')) {
     localStorage.setItem('ATLAS_VOLUNTEERS', JSON.stringify(MOCK_VOLUNTEERS));
-  }
-  if (!localStorage.getItem('ATLAS_EVALUATIONS')) {
     localStorage.setItem('ATLAS_EVALUATIONS', JSON.stringify(MOCK_EVALUATIONS));
+    localStorage.setItem('ATLAS_SEEDED', 'true');
   }
 };
 
@@ -123,6 +124,18 @@ initializeLocalStorage();
 // ----------------------------------------------------
 
 export const db = {
+  // --- Clear all records ---
+  async clearAllData(): Promise<void> {
+    if (supabase) {
+      // In Supabase mode, clearing would require cascading truncates. 
+      // We protect remote DBs by only clearing local records here.
+    }
+    localStorage.setItem('ATLAS_CONGREGATIONS', JSON.stringify([]));
+    localStorage.setItem('ATLAS_VOLUNTEERS', JSON.stringify([]));
+    localStorage.setItem('ATLAS_EVALUATIONS', JSON.stringify([]));
+    // Ensure we keep the seeded flag so it doesn't auto-repopulate on refresh
+    localStorage.setItem('ATLAS_SEEDED', 'true');
+  },
   // --- Sessions ---
   async getSessions(): Promise<ConventionSession[]> {
     if (supabase) {

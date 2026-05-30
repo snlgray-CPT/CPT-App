@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSession } from '../contexts/SessionContext';
 import { X, Key, Database, RefreshCw, Sparkles, CheckCircle2 } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { db } from '../services/db';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -68,6 +69,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
     setTimeout(() => {
       setSavedStatus(false);
     }, 1000);
+  };
+
+  const handlePurgeData = async () => {
+    if (confirm("Are you sure you want to purge all volunteer, congregation, and evaluation records? This cannot be undone.")) {
+      await db.clearAllData();
+      alert("All sandbox records purged. Refreshing workspace...");
+      window.location.reload();
+    }
   };
 
   if (!isOpen) return null;
@@ -167,14 +176,26 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
             </div>
 
             <div className="flex justify-between items-center pt-3 border-t border-sand-200">
-              <button
-                type="button"
-                onClick={handleClear}
-                className="text-xs text-red-700 hover:text-red-900 font-mono font-bold flex items-center gap-1"
-              >
-                <RefreshCw className="w-3.5 h-3.5" />
-                Clear Local Config
-              </button>
+              <div className="flex flex-col items-start gap-1.5">
+                <button
+                  type="button"
+                  onClick={handleClear}
+                  className="text-xs text-red-700 hover:text-red-900 font-mono font-bold flex items-center gap-1 cursor-pointer"
+                  title="Clear API keys and Supabase settings"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  Clear API Keys
+                </button>
+                <button
+                  type="button"
+                  onClick={handlePurgeData}
+                  className="text-xs text-red-700 hover:text-red-900 font-mono font-bold flex items-center gap-1 cursor-pointer text-left"
+                  title="Delete all mock volunteers, congregations, and evaluations"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  Purge Sandbox Records
+                </button>
+              </div>
               
               <div className="flex items-center gap-3">
                 <button

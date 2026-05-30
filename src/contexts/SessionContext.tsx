@@ -40,7 +40,12 @@ export const SessionProvider: React.FC<{ children: React.ReactNode }> = ({ child
       // Load session filter selection if stored
       const savedSession = localStorage.getItem('ATLAS_ACTIVE_SESSION');
       if (savedSession) {
-        setActiveSession(JSON.parse(savedSession));
+        try {
+          setActiveSession(JSON.parse(savedSession));
+        } catch (e) {
+          console.error('Failed to parse saved session JSON:', e);
+          localStorage.removeItem('ATLAS_ACTIVE_SESSION');
+        }
       } else if (list.length > 0) {
         setActiveSession(list[0]);
       }
@@ -56,7 +61,12 @@ export const SessionProvider: React.FC<{ children: React.ReactNode }> = ({ child
     // Load logged in user if stored
     const savedUser = localStorage.getItem('ATLAS_USER');
     if (savedUser) {
-      setUser(JSON.parse(savedUser));
+      try {
+        setUser(JSON.parse(savedUser));
+      } catch (e) {
+        console.error('Failed to parse saved user JSON:', e);
+        localStorage.removeItem('ATLAS_USER');
+      }
     }
     loadSessionData();
   }, []);
