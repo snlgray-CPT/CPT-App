@@ -156,16 +156,24 @@ export const Dashboard: React.FC = () => {
       <div className="bg-sand-50 border border-sand-200 rounded-lg p-4 shadow-sm flex flex-col md:flex-row gap-4 items-center justify-between">
         
         {/* Search */}
-        <div className="relative w-full md:w-96">
-          <input
-            type="text"
-            placeholder="Search volunteers by name or congregation..."
-            className="w-full atlas-input pl-10 py-2.5 font-sans"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-          <Search className="w-4 h-4 text-sand-400 absolute left-3 top-3.5" />
-        </div>
+        <form onSubmit={(e) => e.preventDefault()} className="flex w-full md:w-auto gap-2 items-center">
+          <div className="relative w-full md:w-80">
+            <input
+              type="text"
+              placeholder="Search volunteers by name or congregation..."
+              className="w-full atlas-input pl-10 py-2.5 font-sans"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            <Search className="w-4 h-4 text-sand-400 absolute left-3 top-3.5" />
+          </div>
+          <button
+            type="submit"
+            className="bg-forest-600 hover:bg-forest-700 text-cream-50 px-4 py-2.5 rounded text-sm font-semibold transition-all inline-flex items-center gap-1.5 shadow-sm"
+          >
+            Search
+          </button>
+        </form>
 
         {/* Filters */}
         <div className="flex flex-wrap items-center gap-3 w-full md:w-auto justify-end">

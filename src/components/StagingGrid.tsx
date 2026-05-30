@@ -239,8 +239,33 @@ export const StagingGrid: React.FC<StagingGridProps> = ({ extractedData, onClear
                   <td className="px-3 py-3">
                     {isEditing ? (
                       <div className="flex flex-col gap-1">
+                        <select
+                          className="atlas-input w-full text-[11px] py-1 px-1.5 font-sans mb-1 border border-sand-300 rounded"
+                          value={
+                            matchedCongs.some(c => c.name.toLowerCase() === (editForm?.congregationName || '').toLowerCase() || c.number === editForm?.congregationNumber)
+                              ? matchedCongs.find(c => c.name.toLowerCase() === (editForm?.congregationName || '').toLowerCase() || c.number === editForm?.congregationNumber)?.id
+                              : 'custom'
+                          }
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (val === 'custom') {
+                              setEditForm(prev => prev ? { ...prev, congregationName: '', congregationNumber: '' } : null);
+                            } else {
+                              const found = matchedCongs.find(c => c.id === val);
+                              if (found) {
+                                setEditForm(prev => prev ? { ...prev, congregationName: found.name, congregationNumber: found.number } : null);
+                              }
+                            }
+                          }}
+                        >
+                          <option value="custom">-- Custom / New Cong --</option>
+                          {matchedCongs.map(c => (
+                            <option key={c.id} value={c.id}>{c.name} ({c.number})</option>
+                          ))}
+                        </select>
                         <input
                           type="text"
+                          placeholder="Name"
                           className="atlas-input w-full text-xs"
                           value={editForm?.congregationName || ''}
                           onChange={(e) => setEditForm(prev => prev ? { ...prev, congregationName: e.target.value } : null)}
