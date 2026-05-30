@@ -110,8 +110,9 @@ export const SessionGate: React.FC<{ children: React.ReactNode }> = ({ children 
       await createSession(sess);
       setShowCreate(false);
       setError('');
-    } catch (err) {
-      setError('Could not create convention session.');
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || 'Could not create convention session. Please check Supabase logs/RLS.');
     }
   };
 
