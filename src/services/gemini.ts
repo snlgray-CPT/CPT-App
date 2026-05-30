@@ -79,11 +79,55 @@ export const extractVolunteersFromDoc = async (
     const responseText = response.response.text().trim();
     // Clean up potential markdown formatting that Gemini might return
     const cleanJson = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
-    return JSON.parse(cleanJson) as ExtractedVolunteer[];
+    const parsed = JSON.parse(cleanJson);
+    return normalizeExtractedVolunteers(Array.isArray(parsed) ? parsed : [parsed]);
   } catch (error) {
     console.error('Gemini API extraction failed:', error);
     throw new Error('Gemini API extraction failed. Please check your API key or document format.');
   }
+};
+
+const normalizeExtractedVolunteers = (rawList: any[]): ExtractedVolunteer[] => {
+  return rawList.map(item => {
+    const getVal = (keys: string[]) => {
+      for (const k of keys) {
+        if (item[k] !== undefined && item[k] !== null) return item[k];
+      }
+      return undefined;
+    };
+
+    const name = getVal(['name', 'fullName', 'full_name', 'nombre']) || '';
+    const age = Number(getVal(['age', 'edad']) || 0);
+    const congregationName = getVal(['congregationName', 'congregation_name', 'congregation', 'congregacion']) || '';
+    const congregationNumber = String(getVal(['congregationNumber', 'congregation_number', 'number', 'numero', 'cong_number']) || '');
+    const email = getVal(['email', 'email_address', 'mail', 'correo']) || '';
+    const comments = getVal(['comments', 'comment', 'notes', 'recomendacion', 'comentarios', 'comentario']) || '';
+    const department = getVal(['department', 'department_name', 'departamento']) || '';
+    const assignment = getVal(['assignment', 'assignment_name', 'asignacion', 'puesto']) || '';
+    const rating = getVal(['rating', 'ratin', 'calificacion', 'rate']) || 'A';
+
+    return {
+      name,
+      age,
+      congregationName,
+      congregationNumber,
+      email,
+      comments,
+      department,
+      assignment,
+      rating: normalizeRating(rating)
+    };
+  });
+};
+
+const normalizeRating = (r: any): 'A+' | 'A' | 'A-' | 'B+' | 'B' | 'B-' | 'C+' | 'C' | 'C-' => {
+  const s = String(r).toUpperCase().trim();
+  const valid = ['A+', 'A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-'];
+  if (valid.includes(s)) return s as 'A+' | 'A' | 'A-' | 'B+' | 'B' | 'B-' | 'C+' | 'C' | 'C-';
+  if (s.startsWith('A')) return 'A';
+  if (s.startsWith('B')) return 'B';
+  if (s.startsWith('C')) return 'C';
+  return 'B'; // default fallback
 };
 
 // Realistic mock data depending on filename to demonstrate the review staging grid
@@ -236,11 +280,28 @@ export const extractCongregationsFromDoc = async (
 
     const responseText = response.response.text().trim();
     const cleanJson = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
-    return JSON.parse(cleanJson) as ExtractedCongregation[];
+    const parsed = JSON.parse(cleanJson);
+    return normalizeExtractedCongregations(Array.isArray(parsed) ? parsed : [parsed]);
   } catch (error) {
     console.error('Gemini API congregation extraction failed:', error);
     throw new Error('Gemini API congregation extraction failed. Please check your API key or document format.');
   }
+};
+
+const normalizeExtractedCongregations = (rawList: any[]): ExtractedCongregation[] => {
+  return rawList.map(item => {
+    const getVal = (keys: string[]) => {
+      for (const k of keys) {
+        if (item[k] !== undefined && item[k] !== null) return item[k];
+      }
+      return undefined;
+    };
+
+    const name = getVal(['name', 'congregationName', 'congregation_name', 'congregacion']) || '';
+    const number = String(getVal(['number', 'congregationNumber', 'congregation_number', 'numero']) || '');
+
+    return { name, number };
+  });
 };
 
 const getMockCongregations = (): ExtractedCongregation[] => {
