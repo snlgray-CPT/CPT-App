@@ -11,9 +11,11 @@ export const Dashboard: React.FC = () => {
   
   // Data State
   const [volunteers, setVolunteers] = useState<(Volunteer & { congregation?: any; evaluations?: Evaluation[] })[]>([]);
+  const [congregations, setCongregations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRatingFilter, setSelectedRatingFilter] = useState<string>('all');
+  const [selectedCongregationFilter, setSelectedCongregationFilter] = useState<string>('all');
   const [assistantFilter, setAssistantFilter] = useState(false);
   const [expandedVolunteers, setExpandedVolunteers] = useState<Record<string, boolean>>({});
 
@@ -34,14 +36,21 @@ export const Dashboard: React.FC = () => {
     try {
       setLoading(true);
       const sessionKey = `${activeSession.year}-${activeSession.identifier}`;
-      const list = await db.getVolunteers(sessionKey);
-      setVolunteers(list);
+      
+      // Fetch volunteers and congregations in parallel
+      const [volsList, congsList] = await Promise.all([
+        db.getVolunteers(sessionKey),
+        db.getCongregations(sessionKey)
+      ]);
+      
+      setVolunteers(volsList);
+      setCongregations(congsList);
 
       // Compute quick stats
-      const totalVols = list.length;
+      const totalVols = volsList.length;
       let totalEvals = 0;
       let assistants = 0;
-      list.forEach(v => {
+      volsList.forEach(v => {
         totalEvals += (v.evaluations?.length || 0);
         if (v.is_committee_assistant) assistants++;
       });
@@ -82,9 +91,12 @@ export const Dashboard: React.FC = () => {
     const matchesRating = selectedRatingFilter === 'all' || 
       (primaryEval && primaryEval.rating === selectedRatingFilter);
 
+    const matchesCongregation = selectedCongregationFilter === 'all' ||
+      v.home_congregation_id === selectedCongregationFilter;
+
     const matchesAssistant = !assistantFilter || v.is_committee_assistant;
 
-    return matchesSearch && matchesRating && matchesAssistant;
+    return matchesSearch && matchesRating && matchesCongregation && matchesAssistant;
   });
 
   const sortedVolunteers = [...filteredVolunteers].sort((a, b) => {
@@ -157,6 +169,22 @@ export const Dashboard: React.FC = () => {
 
         {/* Filters */}
         <div className="flex flex-wrap items-center gap-3 w-full md:w-auto justify-end">
+          
+          <div className="flex items-center gap-2">
+            <Filter className="w-3.5 h-3.5 text-sand-500" />
+            <span className="text-xs font-mono font-bold text-sand-600 uppercase">Congregation:</span>
+            <select
+              className="atlas-input py-1 text-xs max-w-[160px]"
+              value={selectedCongregationFilter}
+              onChange={(e) => setSelectedCongregationFilter(e.target.value)}
+            >
+              <option value="all">All Congregations</option>
+              {congregations.map(c => (
+                <option key={c.id} value={c.id}>{c.name} ({c.number})</option>
+              ))}
+            </select>
+          </div>
+
           <div className="flex items-center gap-2">
             <Filter className="w-3.5 h-3.5 text-sand-500" />
             <span className="text-xs font-mono font-bold text-sand-600 uppercase">Rating:</span>
