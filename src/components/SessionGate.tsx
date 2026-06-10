@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useSession } from '../contexts/SessionContext';
-import { Compass, Database, AlertCircle, WifiOff } from 'lucide-react';
+import { Compass, Database, AlertCircle, WifiOff, Lock, User, Info, Sun, Moon } from 'lucide-react';
 
 export const SessionGate: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { 
@@ -18,6 +18,14 @@ export const SessionGate: React.FC<{ children: React.ReactNode }> = ({ children 
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isAuthLoading, setIsAuthLoading] = useState(false);
+
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem('app_theme') || 'dark';
+  });
+
+  const toggleTheme = () => {
+    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+  };
   const [error, setError] = useState('');
 
   // Credentials config inputs for the Connection Block screen
@@ -175,116 +183,127 @@ export const SessionGate: React.FC<{ children: React.ReactNode }> = ({ children 
   // 2. Authentication Login/Signup screens
   if (!user) {
     return (
-      <div className="min-h-screen bg-cream-100 flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-sans">
-        <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-          <div className="mx-auto h-16 w-16 bg-forest-600 rounded-xl flex items-center justify-center shadow-lg transform rotate-3">
-            <Compass className="h-9 w-9 text-cream-100" />
-          </div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-forest-800 tracking-tight">
-            CPT SYSTEM
-          </h2>
-          <p className="mt-2 text-center text-sm text-sand-600">
-            Regional Convention Volunteer Evaluation & Management
-          </p>
+      <div className={`min-h-screen flex items-center justify-center font-sans ${theme === 'dark' ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
+        <div className="absolute top-6 right-6 flex items-center gap-2">
+          <button 
+            onClick={toggleTheme}
+            className={`p-2.5 rounded-xl border transition-all duration-200 ${theme === 'dark' ? 'bg-slate-800 border-slate-700 text-indigo-400 hover:bg-slate-800' : 'bg-white border-slate-200 text-amber-500 hover:bg-slate-100'}`}
+          >
+            {theme === 'dark' ? <Sun className="w-4.5 h-4.5" /> : <Moon className="w-4.5 h-4.5" />}
+          </button>
         </div>
 
-        <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-          <div className="bg-sand-50 border border-sand-200 shadow-lg rounded-xl overflow-hidden">
-            
+        <div className="w-full max-w-md p-8">
+          {/* Logo Brand Header */}
+          <div className="text-center mb-8">
+            <div className="inline-flex bg-gradient-to-br from-indigo-500 to-violet-600 p-4 rounded-2xl text-white shadow-xl shadow-indigo-500/20 mb-4">
+              <Database className="w-8 h-8" />
+            </div>
+            <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-indigo-400 via-violet-400 to-indigo-500 bg-clip-text text-transparent">
+              CPT
+            </h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 font-medium">Convention Personnel Tool</p>
+          </div>
+
+          <div className={`rounded-2xl border p-6 shadow-2xl transition-all duration-300 ${theme === 'dark' ? 'bg-slate-900/80 border-slate-800' : 'bg-white border-slate-200'}`}>
             {/* Tabs */}
-            <div className="flex border-b border-sand-200">
-              <button
-                type="button"
+            <div className="flex border-b dark:border-slate-800 border-slate-200 mb-6">
+              <button 
                 onClick={() => { setAuthTab('login'); setError(''); }}
-                className={`w-1/2 py-3.5 text-center text-sm font-semibold transition-all ${
+                className={`flex-1 pb-3 text-sm font-bold border-b-2 transition-all ${
                   authTab === 'login' 
-                    ? 'bg-cream-100 text-forest-800 border-b-2 border-forest-600' 
-                    : 'text-sand-500 hover:text-sand-800 bg-sand-100'
+                  ? 'border-indigo-500 text-indigo-400 font-bold' 
+                  : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-300'
                 }`}
               >
-                Sign In
+                Log In
               </button>
-              <button
-                type="button"
+              <button 
                 onClick={() => { setAuthTab('signup'); setError(''); }}
-                className={`w-1/2 py-3.5 text-center text-sm font-semibold transition-all ${
+                className={`flex-1 pb-3 text-sm font-bold border-b-2 transition-all ${
                   authTab === 'signup' 
-                    ? 'bg-cream-100 text-forest-800 border-b-2 border-forest-600' 
-                    : 'text-sand-500 hover:text-sand-800 bg-sand-100'
+                  ? 'border-indigo-500 text-indigo-400 font-bold' 
+                  : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-300'
                 }`}
               >
-                Sign Up
+                New Account
               </button>
             </div>
 
-            <form className="space-y-5 p-6 sm:p-8" onSubmit={handleAuthSubmit}>
+            <form onSubmit={handleAuthSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-sand-700 uppercase tracking-wider mb-1 font-mono">
-                  JWPub Email Address
-                </label>
-                <input
-                  id="email"
-                  type="email"
-                  required
-                  placeholder="name@jwpub.org"
-                  className="w-full atlas-input"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
+                <label className="block text-xs font-bold tracking-wider uppercase text-slate-400 mb-1.5">JWPub Email Address</label>
+                <div className="relative">
+                  <User className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <input 
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="name@jwpub.org"
+                    className={`w-full pl-10 pr-3.5 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+                      theme === 'dark' ? 'bg-slate-950 border-slate-800 text-slate-200 font-mono' : 'bg-slate-50 border-slate-200'
+                    }`}
+                  />
+                </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-sand-700 uppercase tracking-wider mb-1 font-mono">
-                  Password
-                </label>
-                <input
-                  id="password"
-                  type="password"
-                  required
-                  placeholder="••••••••"
-                  className="w-full atlas-input"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
+                <label className="block text-xs font-bold tracking-wider uppercase text-slate-400 mb-1.5">Password</label>
+                <div className="relative">
+                  <Lock className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <input 
+                    type="password"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className={`w-full pl-10 pr-3.5 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+                      theme === 'dark' ? 'bg-slate-950 border-slate-800 text-slate-200' : 'bg-slate-50 border-slate-200'
+                    }`}
+                  />
+                </div>
               </div>
 
               {authTab === 'signup' && (
                 <div>
-                  <label className="block text-xs font-semibold text-sand-700 uppercase tracking-wider mb-1 font-mono">
-                    Confirm Password
-                  </label>
-                  <input
-                    id="confirm-password"
-                    type="password"
-                    required
-                    placeholder="••••••••"
-                    className="w-full atlas-input"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                  />
+                  <label className="block text-xs font-bold tracking-wider uppercase text-slate-400 mb-1.5">Confirm Password</label>
+                  <div className="relative">
+                    <Lock className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                    <input 
+                      type="password"
+                      required
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="••••••••"
+                      className={`w-full pl-10 pr-3.5 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+                        theme === 'dark' ? 'bg-slate-950 border-slate-800 text-slate-200' : 'bg-slate-50 border-slate-200'
+                      }`}
+                    />
+                  </div>
                 </div>
               )}
 
               {error && (
-                <div className="text-red-700 bg-red-50 border border-red-200 rounded p-3 text-xs font-mono">
+                <div className="text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-xl p-3 text-xs font-mono">
                   {error}
                 </div>
               )}
 
-              <button
+              <button 
                 type="submit"
                 disabled={isAuthLoading}
-                className="w-full btn-primary py-3 justify-center text-base"
+                className="w-full py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white font-bold transition-all shadow-lg shadow-indigo-500/20 disabled:opacity-50"
               >
                 {isAuthLoading 
                   ? 'Authenticating...' 
-                  : (authTab === 'login' ? 'Access CPT' : 'Create CPT Account')}
+                  : (authTab === 'login' ? 'Authorize CPT Session' : 'Create CPT Account')}
               </button>
             </form>
 
-            <div className="px-6 pb-6 pt-2 text-center border-t border-sand-200">
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium font-mono bg-forest-50 text-forest-800">
-                <Database className="w-3 h-3 text-forest-600" />
+            <div className="px-6 pb-2 pt-4 text-center border-t dark:border-slate-850 border-slate-100 mt-6">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium font-mono bg-emerald-500/10 text-emerald-400">
+                <Database className="w-3 h-3 text-emerald-500" />
                 Supabase Connected
               </span>
             </div>

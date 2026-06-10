@@ -7,7 +7,7 @@ import {
   Search, Plus, Edit2, Trash2, Moon, Sun, Check, X, 
   Upload, Download, Users, Award, 
   ShieldAlert, Sparkles, Filter, Database, AlertCircle, RefreshCw,
-  Sliders, Calendar, MapPin, Phone, Mail, Globe
+  Sliders, Calendar, MapPin, Phone, Mail, Globe, LogOut
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import confetti from 'canvas-confetti';
@@ -26,7 +26,7 @@ const calculateAge = (dobString?: string) => {
 };
 
 export const Dashboard: React.FC = () => {
-  const { activeSession, user } = useSession();
+  const { activeSession, user, logout } = useSession();
   
   // ==========================================
   // STATE MANAGEMENT
@@ -302,15 +302,22 @@ export const Dashboard: React.FC = () => {
     setImportText('');
 
     const reader = new FileReader();
+    const fileName = file.name.toLowerCase();
+    const isWord = fileName.endsWith('.docx') || fileName.endsWith('.doc') || file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || file.type === 'application/msword';
+    const isPdf = fileName.endsWith('.pdf') || file.type === 'application/pdf';
+    const isImage = file.type.startsWith('image/') || fileName.endsWith('.png') || fileName.endsWith('.jpg') || fileName.endsWith('.jpeg');
+    const isText = file.type === 'text/plain' || file.type === 'text/csv' || fileName.endsWith('.csv') || fileName.endsWith('.txt');
 
-    // Check file types
-    if (file.type.startsWith('image/') || file.type === 'application/pdf') {
+    if (isImage || isPdf || isWord) {
       reader.onload = (event: any) => {
         const base64Data = event.target.result.split(',')[1];
         setImportFileBase64(base64Data);
+        if (isWord) {
+          showToast(`Word document "${file.name}" loaded as Base64 payload. Ready for Gemini OCR parsing.`, "info");
+        }
       };
       reader.readAsDataURL(file);
-    } else if (file.type === 'text/plain' || file.type === 'text/csv' || file.name.endsWith('.csv') || file.name.endsWith('.txt')) {
+    } else if (isText) {
       reader.onload = (event: any) => {
         setImportText(event.target.result);
       };
@@ -829,9 +836,18 @@ export const Dashboard: React.FC = () => {
             {/* Dark/Light Toggle */}
             <button 
               onClick={toggleTheme}
-              className={`p-2.5 rounded-xl border transition-all duration-200 ${theme === 'dark' ? 'bg-slate-800 border-slate-700 text-indigo-400 hover:bg-slate-700' : 'bg-slate-105 border-slate-200 text-amber-500 hover:bg-slate-200'}`}
+              className={`p-2.5 rounded-xl border transition-all duration-200 ${theme === 'dark' ? 'bg-slate-800 border-slate-700 text-indigo-400 hover:bg-slate-700' : 'bg-slate-105 border-slate-205 text-amber-500 hover:bg-slate-202'}`}
             >
               {theme === 'dark' ? <Sun className="w-4.5 h-4.5" /> : <Moon className="w-4.5 h-4.5" />}
+            </button>
+
+            {/* Logout Gate Switcher / Lock Switcher */}
+            <button 
+              onClick={logout}
+              title="Lock & Change Convention"
+              className={`p-2.5 rounded-xl border transition-all duration-200 ${theme === 'dark' ? 'bg-slate-800 border-slate-700 text-rose-450 hover:bg-slate-700' : 'bg-slate-105 border-slate-205 text-rose-650 hover:bg-slate-202'}`}
+            >
+              <LogOut className="w-4.5 h-4.5" />
             </button>
           </div>
         </div>
