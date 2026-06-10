@@ -12,6 +12,16 @@ export interface Volunteer {
   jwpub_email: string;
   home_congregation_id: string;
   is_committee_assistant: boolean;
+  
+  // New VolunGrader Fields
+  dob?: string;
+  privilege?: string;
+  last_convention_date?: string;
+  assignment_held?: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+  recommended_for_committee_assistant?: boolean;
 }
 
 export interface Evaluation {
@@ -25,6 +35,11 @@ export interface Evaluation {
   department: string;
   assignment: string;
   comments: string;
+
+  // New VolunGrader Fields
+  grade?: string;
+  recommendation?: string;
+  evaluated_at?: string;
 }
 
 export type RatingType = 'A+' | 'A' | 'A-' | 'B+' | 'B' | 'B-' | 'C+' | 'C' | 'C-';

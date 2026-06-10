@@ -216,6 +216,14 @@ export const db = {
     if (error) throw error;
   },
 
+  async deleteVolunteer(volunteerId: string): Promise<void> {
+    const client = getSupabaseInstance();
+    // Delete associated evaluations first to prevent key constraints issues
+    await client.from('evaluations').delete().eq('volunteer_id', volunteerId);
+    const { error } = await client.from('volunteers').delete().eq('id', volunteerId);
+    if (error) throw error;
+  },
+
   // --- Purge Database Records (Admin action) ---
   async clearAllData(): Promise<void> {
     // 1. Wipe local browser cache tables
